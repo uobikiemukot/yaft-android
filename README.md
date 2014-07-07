@@ -28,3 +28,5 @@ $ make
 ~~~
 $ make install
 ~~~
+
+or use *.apk in apk/
