@@ -25,8 +25,6 @@
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "yaft", __VA_ARGS__))
 #define LOGF(...) ((void)__android_log_print(ANDROID_LOG_FATAL, "yaft", __VA_ARGS__))
 
-#include "glyph.h"
-
 enum char_code {
 	/* 7 bit */
 	BEL = 0x07, BS  = 0x08, HT  = 0x09,
@@ -51,7 +49,7 @@ enum misc {
 	BITS_PER_BYTE     = 8,
 	BYTES_PER_PIXEL   = 3,
 	BITS_PER_SIXEL    = 6,       /* number of bits of a sixel */
-	MAX_ESC_SIZE      = 1024,    /* limit size of terminal escape sequence */
+	MAX_ESC_SIZE      = 256,     /* limit size of terminal escape sequence */
 	SELECT_TIMEOUT    = 15000,   /* used by select() */
 	MAX_ARGS          = 16,      /* max parameters of csi/osc sequence */
 	COLORS            = 256,     /* num of color */
@@ -120,8 +118,6 @@ struct cell_t {
 	struct color_pair_t color_pair; /* color (fg, bg) */
 	enum char_attr attribute;       /* bold, underscore, etc... */
 	enum glyph_width_t width;       /* wide char flag: WIDE, NEXT_TO_WIDE, HALF */
-	bool has_bitmap;
-	unsigned char bitmap[BYTES_PER_PIXEL * CELL_WIDTH * CELL_HEIGHT];
 };
 
 struct esc_t {
@@ -144,15 +140,6 @@ struct state_t {   /* for save, restore state */
 	enum char_attr attribute;
 };
 
-struct sixel_canvas_t {
-	unsigned char *bitmap;
-	struct point_t point;
-	int width, height;
-	int line_length;
-	uint8_t color_index;
-	uint32_t color_table[COLORS];
-};
-
 struct terminal {
 	int fd;                             /* master fd */
 	int width, height;                  /* terminal size (pixel) */
@@ -169,26 +156,11 @@ struct terminal {
 	enum char_attr attribute;           /* bold, underscore, etc... */
 	struct charset_t charset;           /* store UTF-8 byte stream */
 	struct esc_t esc;                   /* store escape sequence */
-	//uint32_t color_palette[COLORS];     /* 256 color palette */
-	const struct glyph_t *glyph_map[UCS2_CHARS];
+	const struct glyph_t
+		*glyph_map[UCS2_CHARS];
 };
 
 struct parm_t { /* for parse_arg() */
 	int argc;
 	char *argv[MAX_ARGS];
-};
-
-struct tty_state {
-	volatile sig_atomic_t visible;
-	volatile sig_atomic_t redraw_flag;
-	volatile sig_atomic_t loop_flag;
-	volatile sig_atomic_t lazy_draw;
-};
-
-/* global variables */
-struct tty_state tty = {
-	.visible      = true,
-	.redraw_flag  = false,
-	.loop_flag    = true,
-	//.lazy_draw    = false,
 };
