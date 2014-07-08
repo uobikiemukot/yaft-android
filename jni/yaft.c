@@ -1,5 +1,6 @@
 /* See LICENSE for licence details. */
 #include "yaft.h"
+#include "glyph.h"
 #include "conf.h"
 #include "color.h"
 #include "keycode.h"
@@ -9,12 +10,12 @@
 #include "function.h"
 #include "parse.h"
 
+volatile sig_atomic_t loop_flag = true;
+
 void sig_handler(int signo)
 {
-	extern struct tty_state tty; /* global */
-
 	if (signo == SIGCHLD)
-		tty.loop_flag = false;
+		loop_flag = false;
 }
 
 void sig_set()
@@ -113,7 +114,6 @@ static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 }
 
 static void app_handle_cmd(struct android_app *app, int32_t cmd) {
-	extern struct tty_state tty; /* global */
 	struct app_state *state = (struct app_state *) app->userData;
 	struct framebuffer *fb  = (struct framebuffer *) state->fb;
 	struct terminal *term   = (struct terminal *) state->term;
@@ -170,17 +170,6 @@ static void app_handle_cmd(struct android_app *app, int32_t cmd) {
 	}
 }
 
-/*
-static void onContentRectChanged(ANativeActivity *activity, const ARect *rect)
-{
-	(void) activity;
-	LOGE("top:%d left:%d right:%d bottom:%d\n",
-		rect->top, rect->left, rect->right, rect->bottom);
-	visible_rect = *rect;
-}
-*/
-
-//int main()
 void android_main(struct android_app *app)
 {
 	uint8_t buf[BUFSIZE];
@@ -209,9 +198,8 @@ void android_main(struct android_app *app)
 	app->userData = &state;
 	app->onAppCmd = app_handle_cmd;
 	app->onInputEvent = app_handle_input;
-	//app->activity->callbacks->onContentRectChanged = onContentRectChanged;
 
-	while (tty.loop_flag) {
+	while (loop_flag) {
 		/* handle shell output */
 		if (state.initialized) {
 			FD_ZERO(&fds);
@@ -224,8 +212,7 @@ void android_main(struct android_app *app)
 				size = read(term.fd, buf, BUFSIZE);
 				if (size > 0) {
 					if (DEBUG) {
-						memset(log, 0, BUFSIZE + 1);
-						snprintf(log, BUFSIZE, "%s", buf);
+						snprintf(log, BUFSIZE + 1, "%s", buf);
 						LOGE("%s\n", log);
 					}
 					parse(&term, buf, size);
@@ -243,19 +230,13 @@ void android_main(struct android_app *app)
 			if (source != NULL)
 				source->process(app, source);
 
-			/*
 			if (app->destroyRequested)
 				goto loop_end;
-			*/
 		}
 	}
 
 	/* normal exit */
-//loop_end:
-	LOGE("main loop end!\n");
+loop_end:
 	ANativeActivity_finish(app->activity);
 	exit(EXIT_SUCCESS);
-
-	return;
-	//return EXIT_SUCCESS;
 }
