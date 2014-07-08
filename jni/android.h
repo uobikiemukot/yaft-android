@@ -69,9 +69,9 @@ void fb_init(struct framebuffer *fb)
 	pixel_format = ANativeWindow_getFormat(fb->app->window);
 	if (pixel_format == WINDOW_FORMAT_RGBA_8888
 		|| pixel_format == WINDOW_FORMAT_RGBX_8888) {
-		vinfo.red.offset   = 16;
+		vinfo.red.offset   = 0;
 		vinfo.green.offset = 8;
-		vinfo.blue.offset  = 0;
+		vinfo.blue.offset  = 16;
 
 		vinfo.red.length   = 8;
 		vinfo.green.length = 8;
@@ -80,9 +80,9 @@ void fb_init(struct framebuffer *fb)
 		fb->bytes_per_pixel = 4;
 	}
 	else if (pixel_format == WINDOW_FORMAT_RGB_565) {
-		vinfo.red.offset   = 11;
+		vinfo.red.offset   = 0;
 		vinfo.green.offset = 5;
-		vinfo.blue.offset  = 0;
+		vinfo.blue.offset  = 11;
 
 		vinfo.red.length   = 5;
 		vinfo.green.length = 6;
