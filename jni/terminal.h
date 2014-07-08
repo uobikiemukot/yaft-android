@@ -165,7 +165,7 @@ void addch(struct terminal *term, uint32_t code)
 	if (DEBUG)
 		LOGE("addch: U+%.4X\n", code);
 
-	width = wcwidth(code);
+	width = mk_wcwidth(code);
 
 	if (width <= 0) /* zero width */
 		return;
