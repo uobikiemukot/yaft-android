@@ -16,7 +16,7 @@ mkfont_bdf: tools/mkfont_bdf.c tools/font.h tools/bdf.h
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
 jni/glyph.h: mkfont_bdf
-	./mkfont_bdf table/alias fonts/milkjf_k16.bdf fonts/milkjf_8x16.bdf fonts/milkjf_8x16r.bdf > jni/glyph.h
+	./mkfont_bdf table/alias fonts/mplus_j12r.bdf fonts/mplus_f12r-jisx0201.bdf fonts/mplus_f12r.bdf > jni/glyph.h
 
 $(DST): jni/glyph.h
 	android update project --path ./ --target android-17
