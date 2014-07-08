@@ -16,7 +16,6 @@
 #include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
-#include <wchar.h>
 
 #include <android/log.h>
 #include <android/keycodes.h>
