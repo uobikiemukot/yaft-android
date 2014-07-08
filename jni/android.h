@@ -38,8 +38,6 @@ struct app_state {
 	bool initialized;
 };
 
-//ARect visible_rect; /* set by onContentRectChanged() in yaft.c */
-
 /* common functions */
 static inline uint32_t color2pixel(struct fb_vinfo_t *vinfo, uint32_t color)
 {
@@ -54,8 +52,6 @@ static inline uint32_t color2pixel(struct fb_vinfo_t *vinfo, uint32_t color)
 	g = g >> (BITS_PER_BYTE - vinfo->green.length);
 	b = b >> (BITS_PER_BYTE - vinfo->blue.length);
 
-	//return bit_reverse((r << vinfo->red.offset)
-		//+ (g << vinfo->green.offset) + (b << vinfo->blue.offset), 16);
 	return (r << vinfo->red.offset)
 		+ (g << vinfo->green.offset) + (b << vinfo->blue.offset);
 }
@@ -69,12 +65,6 @@ void fb_init(struct framebuffer *fb)
 
 	fb->width  = ANativeWindow_getWidth(fb->app->window);
 	fb->height = ANativeWindow_getHeight(fb->app->window);
-	/*
-	fb->width   = visible_rect.right - visible_rect.left;
-	fb->height  = visible_rect.bottom - visible_rect.top;
-	fb->offset.y = visible_rect.top;
-	fb->offset.x = visible_rect.left;
-	*/
 
 	pixel_format = ANativeWindow_getFormat(fb->app->window);
 	if (pixel_format == WINDOW_FORMAT_RGBA_8888
@@ -103,50 +93,38 @@ void fb_init(struct framebuffer *fb)
 	else
 		fatal("unknown framebuffer type");
 
-	if (DEBUG) {
-		LOGE("fb_init()\n");
-		LOGE("width:%d height:%d\n", fb->width, fb->height);
-		LOGE("pixel_format:%d bpp:%d\n", pixel_format, fb->bytes_per_pixel);
-	}
+	if (DEBUG)
+		LOGE("width:%d height:%d bytes perl pixel:%d\n",
+			fb->width, fb->height, fb->bytes_per_pixel);
 
 	for (i = 0; i < COLORS; i++) /* init color palette */
 		fb->color_palette[i] = color2pixel(&vinfo, color_list[i]);
 
-	fb->line_length = ANativeWindow_getWidth(fb->app->window) * fb->bytes_per_pixel;
-	fb->screen_size = ANativeWindow_getHeight(fb->app->window) * fb->line_length;
+	fb->line_length = fb->width * fb->bytes_per_pixel;
+	fb->screen_size = fb->height * fb->line_length;
 
 	fb->buf   = (unsigned char *) ecalloc(1, fb->screen_size);
 	fb->vinfo = vinfo;
 
 	fb->offset.x = 0; // FIXME: hard coding!!
 	fb->offset.y = 25; // FIXME: hard coding!!
+	fb->width  -= fb->offset.x;
 	fb->height -= fb->offset.y;
 }
 
 void fb_die(struct framebuffer *fb)
 {
-	//(void) fb;
-	/* FIXME: should we release something else? */
-	if (DEBUG)
-		LOGE("fb_die()\n");
 	free(fb->buf);
 }
 
 static inline void draw_line(struct framebuffer *fb, struct terminal *term, int line)
 {
-	int pos, bit_shift, margin_right;
+	int pos, bdf_padding, glyph_width, margin_right;
 	int col, w, h;
 	uint32_t pixel;
 	struct color_pair_t color_pair;
 	struct cell_t *cellp;
 	const struct glyph_t *glyphp;
-
-	/*
-	fb->yoffset = fb->app->contentRect.top;
-	fb->height -= fb->yoffset;
-
-	LOGE("yoffset:%d\n", fb->yoffset);
-	*/
 
 	for (col = term->cols - 1; col >= 0; col--) {
 		margin_right = (term->cols - 1 - col) * CELL_WIDTH;
@@ -159,7 +137,10 @@ static inline void draw_line(struct framebuffer *fb, struct terminal *term, int 
 		glyphp     = cellp->glyphp;
 
 		/* check wide character or not */
-		bit_shift = (cellp->width == WIDE) ? CELL_WIDTH: 0;
+		glyph_width = (cellp->width == HALF) ? CELL_WIDTH: CELL_WIDTH * 2;
+		bdf_padding = my_ceil(glyph_width, BITS_PER_BYTE) * BITS_PER_BYTE - glyph_width;
+		if (cellp->width == WIDE)
+			bdf_padding += CELL_WIDTH;
 
 		/* check cursor positon */
 		if ((term->mode & MODE_CURSOR && line == term->cursor.y)
@@ -167,7 +148,7 @@ static inline void draw_line(struct framebuffer *fb, struct terminal *term, int 
 			|| (cellp->width == WIDE && (col + 1) == term->cursor.x)
 			|| (cellp->width == NEXT_TO_WIDE && (col - 1) == term->cursor.x))) {
 			color_pair.fg = DEFAULT_BG;
-			color_pair.bg = (!tty.visible && BACKGROUND_DRAW) ? PASSIVE_CURSOR_COLOR: ACTIVE_CURSOR_COLOR;
+			color_pair.bg = ACTIVE_CURSOR_COLOR;
 		}
 
 		for (h = 0; h < CELL_HEIGHT; h++) {
@@ -180,30 +161,16 @@ static inline void draw_line(struct framebuffer *fb, struct terminal *term, int 
 					+ (line * CELL_HEIGHT + h + fb->offset.y) * fb->line_length;
 
 				/* set color palette */
-				if (glyphp->bitmap[h] & (0x01 << (bit_shift + w)))
-					//pixel = color2pixel(&fb->vinfo, color_list[color_pair.fg]);
+				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w)))
 					pixel = fb->color_palette[color_pair.fg];
 				else
-					//pixel = color2pixel(&fb->vinfo, color_list[color_pair.bg]);
 					pixel = fb->color_palette[color_pair.bg];
 
 				/* update copy buffer only */
-				//memcpy(((unsigned char *) fb->buf.bits) + pos, &pixel, fb->bytes_per_pixel);
-				//memcpy(fb->fp + pos, &pixel, fb->bytes_per_pixel);
 				memcpy(fb->buf + pos, &pixel, fb->bytes_per_pixel);
 			}
 		}
 	}
-
-	/* actual display update (bit blit) */
-	/*
-	int size;
-	pos = (line * CELL_HEIGHT + fb->yoffset) * fb->line_length;
-	size = CELL_HEIGHT * fb->line_length;
-	memcpy(fb->fp + pos, fb->buf + pos, size);
-	*/
-
-	//LOGE("done drawing\n");
 	term->line_dirty[line] = ((term->mode & MODE_CURSOR) && term->cursor.y == line) ? true: false;
 }
 
@@ -218,9 +185,6 @@ void refresh(struct framebuffer *fb, struct terminal *term)
 	if (ANativeWindow_lock(fb->app->window, &dst_buf, NULL) < 0)
 		return;
 
-	//fb->buf = (unsigned char *) fb->native_buf.bits;
-	//fb->fp = (unsigned char *) dst_buf.bits;
-
 	if (term->mode & MODE_CURSOR)
 		term->line_dirty[term->cursor.y] = true;
 
@@ -229,8 +193,6 @@ void refresh(struct framebuffer *fb, struct terminal *term)
 			draw_line(fb, term, line);
 	}
 	memcpy(dst_buf.bits, fb->buf, fb->screen_size);
-	//memcpy(((unsigned char *) dst_buf.bits) + fb->offset.y * fb->line_length,
-		//fb->buf + fb->offset.y * fb->line_length, fb->height * fb->line_length);
 
 	ANativeWindow_unlockAndPost(fb->app->window);
 }
