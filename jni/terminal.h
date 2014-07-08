@@ -8,7 +8,6 @@ void erase_cell(struct terminal *term, int y, int x)
 	cellp->color_pair = term->color_pair; /* bce */
 	cellp->attribute  = ATTR_RESET;
 	cellp->width      = HALF;
-	cellp->has_bitmap = false;
 
 	term->line_dirty[y] = true;
 }
@@ -54,7 +53,6 @@ int set_cell(struct terminal *term, int y, int x, const struct glyph_t *glyphp)
 
 	cell.attribute  = term->attribute;
 	cell.width      = glyphp->width;
-	cell.has_bitmap = false;
 
 	cellp    = &term->cells[x + y * term->cols];
 	*cellp   = cell;
