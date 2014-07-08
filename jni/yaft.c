@@ -5,6 +5,7 @@
 #include "color.h"
 #include "keycode.h"
 #include "util.h"
+#include "wcwidth.h"
 #include "android.h"
 #include "terminal.h"
 #include "function.h"
@@ -113,11 +114,30 @@ static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 	return 1;
 }
 
+void app_init(struct app_state *state)
+{
+	sig_set();
+	fb_init(state->fb);
+	term_init(state->term, state->fb->width, state->fb->height);
+	fork_and_exec(&state->term->fd, state->term->lines, state->term->cols);
+	state->focused = true;
+	state->initialized = true;
+}
+
+void app_die(struct app_state *state)
+{
+	if (state->initialized == false)
+		return;
+
+	term_die(state->term);
+	fb_die(state->fb);
+	sig_reset();
+	state->focused = false;
+	state->initialized = false;
+}
+
 static void app_handle_cmd(struct android_app *app, int32_t cmd) {
 	struct app_state *state = (struct app_state *) app->userData;
-	struct framebuffer *fb  = (struct framebuffer *) state->fb;
-	struct terminal *term   = (struct terminal *) state->term;
-
 	static char *app_cmd[] = {
 		[APP_CMD_INPUT_CHANGED]        = "APP_CMD_INPUT_CHANGED",
 		[APP_CMD_INIT_WINDOW]          = "APP_CMD_INIT_WINDOW",
@@ -136,28 +156,17 @@ static void app_handle_cmd(struct android_app *app, int32_t cmd) {
 		[APP_CMD_STOP]                 = "APP_CMD_STOP",
 		[APP_CMD_DESTROY]              = "APP_CMD_DESTROY",
 	};
+
 	if (DEBUG)
 		LOGE("%s\n", app_cmd[cmd]);
 
 	switch (cmd) {
 	case APP_CMD_INIT_WINDOW:
-		if (app->window != NULL) {
-			sig_set();
-			fb_init(fb);
-			term_init(term, fb->width, fb->height);
-			fork_and_exec(&term->fd, term->lines, term->cols);
-			state->focused = true;
-			state->initialized = true;
-		}
+		if (app->window != NULL)
+			app_init(state);
 		break;
 	case APP_CMD_TERM_WINDOW:
-		if (state->initialized) {
-			term_die(term);
-			fb_die(fb);
-			sig_reset();
-			state->focused = false;
-			state->initialized = false;
-		}
+		app_die(state);
 		break;
 	case APP_CMD_GAINED_FOCUS:
 		state->focused = true;
@@ -230,8 +239,10 @@ void android_main(struct android_app *app)
 			if (source != NULL)
 				source->process(app, source);
 
-			if (app->destroyRequested)
+			if (app->destroyRequested) {
+				app_die(&state);
 				goto loop_end;
+			}
 		}
 	}
 
