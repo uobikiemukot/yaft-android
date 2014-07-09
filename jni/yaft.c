@@ -76,6 +76,7 @@ int keycode2keysym(int keycode, int keystate)
 static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 	struct app_state *state = (struct app_state *) app->userData;
 	int action, keycode, keysym;
+	const char *keyseq;
 
 	if (AInputEvent_getType(event) != AINPUT_EVENT_TYPE_KEY)
 		return 0;
@@ -83,15 +84,23 @@ static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 	action  = AKeyEvent_getAction(event); 
 	keycode = AKeyEvent_getKeyCode(event);
 
-	if(action == AKEY_EVENT_ACTION_MULTIPLE)
+	if (action == AKEY_EVENT_ACTION_MULTIPLE)
 		return 0;
 
-	if(action == AKEY_EVENT_ACTION_DOWN) {
-		if(keycode == AKEYCODE_SHIFT_RIGHT || keycode == AKEYCODE_SHIFT_LEFT)
+	/* we don't handle some hardware keys */
+	if (keycode == AKEYCODE_APP_SWITCH
+		|| keycode == AKEYCODE_BACK
+		|| keycode == AKEYCODE_CAMERA
+		|| keycode == AKEYCODE_HOME
+		|| keycode == AKEYCODE_MENU)
+		return 0;
+
+	if (action == AKEY_EVENT_ACTION_DOWN) {
+		if (keycode == AKEYCODE_SHIFT_RIGHT || keycode == AKEYCODE_SHIFT_LEFT)
 			state->keystate |= SHIFT_MASK;
-		else if(keycode == AKEYCODE_CTRL_RIGHT || keycode == AKEYCODE_CTRL_LEFT)
+		else if (keycode == AKEYCODE_CTRL_RIGHT || keycode == AKEYCODE_CTRL_LEFT)
 			state->keystate |= CTRL_MASK ;
-		else if(keycode == AKEYCODE_ALT_RIGHT || keycode == AKEYCODE_ALT_LEFT)
+		else if (keycode == AKEYCODE_ALT_RIGHT || keycode == AKEYCODE_ALT_LEFT)
 			state->keystate |= ALT_MASK;
 		else {
 			if ((keysym = keycode2keysym(keycode, state->keystate)) != 0) {
@@ -99,16 +108,21 @@ static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 					ewrite(state->term->fd, "\033", 1);
 				ewrite(state->term->fd, &keysym, 1);
 			}
+			else if ((keyseq = keycode2keyseq[keycode]) != NULL) { /* some special keys */
+				if (state->keystate & ALT_MASK)
+					ewrite(state->term->fd, "\033", 1);
+				ewrite(state->term->fd, keyseq, strlen(keyseq));
+			}
 			else
 				return 0;
 		}
 	}
-	else if(action == AKEY_EVENT_ACTION_UP) {
-		if(keycode == AKEYCODE_SHIFT_RIGHT || keycode == AKEYCODE_SHIFT_LEFT)
+	else if (action == AKEY_EVENT_ACTION_UP) {
+		if (keycode == AKEYCODE_SHIFT_RIGHT || keycode == AKEYCODE_SHIFT_LEFT)
 			state->keystate &= ~SHIFT_MASK;
-		else if(keycode == AKEYCODE_CTRL_RIGHT || keycode == AKEYCODE_CTRL_LEFT)
+		else if (keycode == AKEYCODE_CTRL_RIGHT || keycode == AKEYCODE_CTRL_LEFT)
 			state->keystate &= ~CTRL_MASK ;
-		else if(keycode == AKEYCODE_ALT_RIGHT || keycode == AKEYCODE_ALT_LEFT)
+		else if (keycode == AKEYCODE_ALT_RIGHT || keycode == AKEYCODE_ALT_LEFT)
 			state->keystate &= ~ALT_MASK;
     }
 	return 1;
