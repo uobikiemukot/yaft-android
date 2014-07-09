@@ -6,6 +6,12 @@
 /* shell */
 const char *shell_cmd = "/system/bin/sh";
 
+enum keystate {
+	SHIFT_MASK = 0x01,
+	CTRL_MASK  = 0x02,
+	ALT_MASK   = 0x04,
+};
+
 struct bitfield_t {
 	uint8_t offset;
 	uint8_t length;

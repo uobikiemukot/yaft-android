@@ -34,15 +34,6 @@ enum char_code {
 	BACKSLASH = 0x5C,
 };
 
-enum {
-	AKEYCODE_ESCAPE     = 111,
-	AKEYCODE_CTRL_LEFT  = 113,
-	AKEYCODE_CTRL_RIGHT = 114,
-	SHIFT_MASK = 0x01,
-	CTRL_MASK  = 0x02,
-	ALT_MASK   = 0x04,
-};
-
 enum misc {
 	BUFSIZE           = 1024,    /* read, esc, various buffer size */
 	BITS_PER_BYTE     = 8,
