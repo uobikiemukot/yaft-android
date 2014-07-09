@@ -1,3 +1,30 @@
+enum {
+	/*
+		not defined in: platforms/android-9/arch-arm/usr/include/android/keycodes.h
+		copy from     : platforms/android-17/arch-arm/usr/include/android/keycodes.h
+	*/
+	AKEYCODE_ESCAPE      = 111,
+	AKEYCODE_FORWARD_DEL = 112,
+	AKEYCODE_CTRL_LEFT   = 113,
+	AKEYCODE_CTRL_RIGHT  = 114,
+	AKEYCODE_MOVE_HOME   = 122,
+	AKEYCODE_MOVE_END    = 123,
+	AKEYCODE_INSERT      = 124,
+	AKEYCODE_F1          = 131,
+	AKEYCODE_F2          = 132,
+	AKEYCODE_F3          = 133,
+	AKEYCODE_F4          = 134,
+	AKEYCODE_F5          = 135,
+	AKEYCODE_F6          = 136,
+	AKEYCODE_F7          = 137,
+	AKEYCODE_F8          = 138,
+	AKEYCODE_F9          = 139,
+	AKEYCODE_F10         = 140,
+	AKEYCODE_F11         = 141,
+	AKEYCODE_F12         = 142,
+	AKEYCODE_APP_SWITCH  = 187,
+};
+
 const uint8_t keycode2keysym_table[] = {
 	/* us qwerty keybord */
 	/* row 4 */
@@ -21,8 +48,8 @@ const uint8_t keycode2keysym_table[] = {
 	[AKEYCODE_TAB]    = 0x09,
 	[AKEYCODE_SPACE]  = 0x20,
 	[AKEYCODE_ENTER]  = 0x0A,
-	[AKEYCODE_DEL]    = 0x7F,
 	[AKEYCODE_ESCAPE] = 0x1B,
+	[AKEYCODE_DEL]    = 0x7F, /* backspace key */
 };
 
 const uint8_t keycode_shift[] = {
@@ -50,6 +77,53 @@ const uint8_t keycode_ctrl[] = {
 	['['] = 0x1B, ['\\'] = 0x1C, [']'] = 0x1D, ['^'] = 0x1E, ['_'] = 0x1E,
 };
 
+const char *keycode2keyseq[] = {
+/*
+kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+*/
+	[AKEYCODE_DPAD_UP]    = "\033[A",
+	[AKEYCODE_DPAD_DOWN]  = "\033[B",
+	[AKEYCODE_DPAD_RIGHT] = "\033[C",
+	[AKEYCODE_DPAD_LEFT]  = "\033[D",
+/*
+kb2=\E[G, kbs=\177, kcbt=\E[Z,
+*/
+	/* where is backtab key? */
+	[AKEYCODE_DPAD_CENTER] = "\033[G",
+/*
+khome=\E[1~, kich1=\E[2~, kdch1=\E[3~, kend=\E[4~,
+*/
+	[AKEYCODE_MOVE_HOME]   = "\033[1~",
+	[AKEYCODE_INSERT]      = "\033[2~",
+	[AKEYCODE_FORWARD_DEL] = "\033[3~", /* delete key */
+	[AKEYCODE_MOVE_END]    = "\033[4~",
+/*
+kmous=\E[M, knp=\E[6~, kpp=\E[5~, kspd=^Z,
+*/
+	/* maybe, mouse event/suspend key are not defined */
+	[AKEYCODE_PAGE_UP]   = "\033[5~",
+	[AKEYCODE_PAGE_DOWN] = "\033[6~",
+/*
+kf1=\E[[A, kf2=\E[[B, kf3=\E[[C, kf4=\E[[D, kf5=\E[[E,
+kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, kf10=\E[21~,
+kf11=\E[23~, kf12=\E[24~, kf13=\E[25~, kf14=\E[26~, kf15=\E[28~,
+kf16=\E[29~, kf17=\E[31~, kf18=\E[32~, kf19=\E[33~, kf20=\E[34~,
+*/
+	/* maybe F13 - F20 are not defined */
+	[AKEYCODE_F1]  = "\033[[A",
+	[AKEYCODE_F2]  = "\033[[B",
+	[AKEYCODE_F3]  = "\033[[C",
+	[AKEYCODE_F4]  = "\033[[D",
+	[AKEYCODE_F5]  = "\033[[E",
+	[AKEYCODE_F6]  = "\033[17~",
+	[AKEYCODE_F7]  = "\033[18~",
+	[AKEYCODE_F8]  = "\033[19~",
+	[AKEYCODE_F9]  = "\033[20~",
+	[AKEYCODE_F10] = "\033[21~",
+	[AKEYCODE_F11] = "\033[23~",
+	[AKEYCODE_F12] = "\033[24~",
+};
+
 /* other keys
 [AKEYCODE_UNKNOWN]
 [AKEYCODE_SOFT_LEFT]
@@ -61,11 +135,7 @@ const uint8_t keycode_ctrl[] = {
 
 [AKEYCODE_STAR]
 [AKEYCODE_POUND]
-[AKEYCODE_DPAD_UP]
-[AKEYCODE_DPAD_DOWN]
-[AKEYCODE_DPAD_LEFT]
-[AKEYCODE_DPAD_RIGHT]
-[AKEYCODE_DPAD_CENTER]
+
 [AKEYCODE_VOLUME_UP]
 [AKEYCODE_VOLUME_DOWN]
 [AKEYCODE_POWER]
@@ -96,8 +166,7 @@ const uint8_t keycode_ctrl[] = {
 [AKEYCODE_MEDIA_REWIND]
 [AKEYCODE_MEDIA_FAST_FORWARD]
 [AKEYCODE_MUTE]
-[AKEYCODE_PAGE_UP]
-[AKEYCODE_PAGE_DOWN]
+
 [AKEYCODE_PICTSYMBOLS]
 [AKEYCODE_SWITCH_CHARSET]
 [AKEYCODE_BUTTON_A]
@@ -116,7 +185,6 @@ const uint8_t keycode_ctrl[] = {
 [AKEYCODE_BUTTON_SELECT]
 [AKEYCODE_BUTTON_MODE]
 
-[AKEYCODE_FORWARD_DEL]
 [AKEYCODE_CTRL_LEFT]
 [AKEYCODE_CTRL_RIGHT]
 [AKEYCODE_CAPS_LOCK]
@@ -126,27 +194,13 @@ const uint8_t keycode_ctrl[] = {
 [AKEYCODE_FUNCTION]
 [AKEYCODE_SYSRQ]
 [AKEYCODE_BREAK]
-[AKEYCODE_MOVE_HOME]
-[AKEYCODE_MOVE_END]
-[AKEYCODE_INSERT]
+
 [AKEYCODE_FORWARD]
 [AKEYCODE_MEDIA_PLAY]
 [AKEYCODE_MEDIA_PAUSE]
 [AKEYCODE_MEDIA_CLOSE]
 [AKEYCODE_MEDIA_EJECT]
 [AKEYCODE_MEDIA_RECORD]
-[AKEYCODE_F1]
-[AKEYCODE_F2]
-[AKEYCODE_F3]
-[AKEYCODE_F4]
-[AKEYCODE_F5]
-[AKEYCODE_F6]
-[AKEYCODE_F7]
-[AKEYCODE_F8]
-[AKEYCODE_F9]
-[AKEYCODE_F10]
-[AKEYCODE_F11]
-[AKEYCODE_F12]
 [AKEYCODE_NUM_LOCK]
 [AKEYCODE_NUMPAD_0]
 [AKEYCODE_NUMPAD_1]
