@@ -1,5 +1,6 @@
 #include "mkfont_bdf.h"
 #include "../jni/conf.h"
+#include "../jni/wcwidth.h"
 #include "font.h"
 #include "bdf.h"
 

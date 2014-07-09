@@ -149,7 +149,7 @@ void dump_fonts(struct glyph_t *fonts)
 
 	fprintf(stdout, "static const struct glyph_t glyphs[] = {\n");
 	for (i = 0; i < UCS2_CHARS; i++) {
-		width = wcwidth(i);
+		width = my_wcwidth(i);
 
 		if ((width <= 0)                                 /* not printable */
 			|| (fonts[i].bitmap == NULL)                 /* glyph not found */

@@ -307,3 +307,9 @@ int mk_wcswidth_cjk(const wchar_t *pwcs, size_t n)
 
   return width;
 }
+
+int my_wcwidth(wchar_t ucs)
+{
+	return (AMBWIDTH_IS_WIDE) ?
+		mk_wcwidth_cjk(ucs): mk_wcwidth(ucs);
+}
