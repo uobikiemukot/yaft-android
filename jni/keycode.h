@@ -1,3 +1,4 @@
+/* See LICENSE for licence details. */
 enum {
 	/*
 		not defined in: platforms/android-9/arch-arm/usr/include/android/keycodes.h
