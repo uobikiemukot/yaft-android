@@ -16,8 +16,7 @@ here is package list in Archlinux (some packages found in AUR).
 
 ## build
 
-before make, check your PATH variable.
-(we will use android/ndk-build/ant/adb)
+we will use android/ndk-build/ant/adb
 
 ~~~
 $ make
