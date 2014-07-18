@@ -8,6 +8,7 @@ enum {
 	AKEYCODE_FORWARD_DEL = 112,
 	AKEYCODE_CTRL_LEFT   = 113,
 	AKEYCODE_CTRL_RIGHT  = 114,
+	AKEYCODE_CAPS_LOCK   = 115,
 	AKEYCODE_MOVE_HOME   = 122,
 	AKEYCODE_MOVE_END    = 123,
 	AKEYCODE_INSERT      = 124,
@@ -69,6 +70,7 @@ const uint8_t keycode_shift[] = {
 
 const uint8_t keycode_ctrl[] = {
 	['@'] = 0x00, /* FIXME: is this correct? */
+	['2'] = 0x00, /* FIXME: is this correct? */
 	['a'] = 0x01, ['b'] = 0x02, ['c'] = 0x03, ['d'] = 0x04, ['e'] = 0x05,
 	['f'] = 0x06, ['g'] = 0x07, ['h'] = 0x08, ['i'] = 0x09, ['j'] = 0x0A,
 	['k'] = 0x0B, ['l'] = 0x0C, ['m'] = 0x0D, ['n'] = 0x0E, ['o'] = 0x0F,
