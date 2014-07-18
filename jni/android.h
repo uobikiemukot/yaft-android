@@ -26,6 +26,7 @@ struct fb_vinfo_t {
 /* struct for android */
 struct framebuffer {
 	unsigned char *buf;             /* copy of framebuffer */
+	//ANativeWindow_Buffer buf;
 	int width, height;              /* display resolution */
 	int line_length;                /* line length (byte) */
 	long screen_size;
@@ -42,6 +43,7 @@ struct app_state {
 	int keystate;
 	bool focused;
 	bool initialized;
+	//bool softkeyboard_visible;
 };
 
 /* common functions */
@@ -68,9 +70,13 @@ void fb_init(struct framebuffer *fb)
 	int i;
 	int32_t pixel_format;
 	struct fb_vinfo_t vinfo;
+	ANativeWindow_Buffer buf;
 
 	fb->width  = ANativeWindow_getWidth(fb->app->window);
 	fb->height = ANativeWindow_getHeight(fb->app->window);
+
+	//ANativeWindow_setBuffersGeometry(fb->app->window , 0, 0, WINDOW_FORMAT_RGB_565);
+	//ANativeWindow_setBuffersGeometry(fb->app->window , 0, 0, WINDOW_FORMAT_RGBA_8888);
 
 	pixel_format = ANativeWindow_getFormat(fb->app->window);
 	if (pixel_format == WINDOW_FORMAT_RGBA_8888
@@ -100,16 +106,24 @@ void fb_init(struct framebuffer *fb)
 		fatal("unknown framebuffer type");
 
 	if (DEBUG)
-		LOGE("width:%d height:%d bytes perl pixel:%d\n",
-			fb->width, fb->height, fb->bytes_per_pixel);
+		LOGE("format:%d width:%d height:%d bytes perl pixel:%d\n",
+			pixel_format, fb->width, fb->height, fb->bytes_per_pixel);
 
 	for (i = 0; i < COLORS; i++) /* init color palette */
 		fb->color_palette[i] = color2pixel(&vinfo, color_list[i]);
 
-	fb->line_length = fb->width * fb->bytes_per_pixel;
-	fb->screen_size = fb->height * fb->line_length;
+	if (ANativeWindow_lock(fb->app->window, &buf, NULL) < 0)
+		fatal("ANativeWindow_lock() failed");
+
+	//fb->line_length = fb->width * fb->bytes_per_pixel;
+	//fb->screen_size = fb->height * fb->line_length;
+	fb->line_length = buf.stride * fb->bytes_per_pixel;
+	fb->screen_size = buf.height * fb->line_length;
+
+	ANativeWindow_unlockAndPost(fb->app->window);
 
 	fb->buf   = (unsigned char *) ecalloc(1, fb->screen_size);
+	//fb->buf.bits = NULL;
 	fb->vinfo = vinfo;
 
 	fb->offset.x = 0; // FIXME: hard coding!!
@@ -120,6 +134,7 @@ void fb_init(struct framebuffer *fb)
 
 void fb_die(struct framebuffer *fb)
 {
+	//(void) fb;
 	free(fb->buf);
 }
 
@@ -191,6 +206,10 @@ void refresh(struct framebuffer *fb, struct terminal *term)
 	if (ANativeWindow_lock(fb->app->window, &dst_buf, NULL) < 0)
 		return;
 
+	if (DEBUG)
+		LOGE("format:%d stride:%d width:%d height:%d\n",
+			dst_buf.format, dst_buf.stride, dst_buf.width, dst_buf.height);
+
 	if (term->mode & MODE_CURSOR)
 		term->line_dirty[term->cursor.y] = true;
 
@@ -198,7 +217,10 @@ void refresh(struct framebuffer *fb, struct terminal *term)
 		if (term->line_dirty[line])
 			draw_line(fb, term, line);
 	}
+	//memcpy(dst_buf.bits, fb->buf.bits, fb->screen_size);
 	memcpy(dst_buf.bits, fb->buf, fb->screen_size);
+
+	//fb->buf = dst_buf;
 
 	ANativeWindow_unlockAndPost(fb->app->window);
 }
