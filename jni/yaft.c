@@ -84,6 +84,25 @@ static int32_t app_handle_input(struct android_app *app, AInputEvent* event) {
 	action  = AKeyEvent_getAction(event); 
 	keycode = AKeyEvent_getKeyCode(event);
 
+	if (DEBUG)
+		LOGE("keycode:0x%.2X (dec:%d)\n", keycode, keycode);
+
+	/* ANativeActivity_{show,hide}SoftInput() doesn't work
+	if (keycode == AKEYCODE_CAPS_LOCK) {
+		if (state->softkeyboard_visible) {
+			//ANativeActivity_hideSoftInput(state->fb->app->activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_NOT_ALWAYS);
+			ANativeActivity_hideSoftInput(state->fb->app->activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
+			state->softkeyboard_visible = false;
+		}
+		else {
+			//ANativeActivity_showSoftInput(state->fb->app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
+			ANativeActivity_showSoftInput(state->fb->app->activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_IMPLICIT);
+			state->softkeyboard_visible = true;
+		}
+		return 1;
+	}
+	*/
+
 	if (action == AKEY_EVENT_ACTION_MULTIPLE)
 		return 0;
 
@@ -136,6 +155,7 @@ void app_init(struct app_state *state)
 	fork_and_exec(&state->term->fd, state->term->lines, state->term->cols);
 	state->focused = true;
 	state->initialized = true;
+	//state->softkeyboard_visible = false;
 }
 
 void app_die(struct app_state *state)
