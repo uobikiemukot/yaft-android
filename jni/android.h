@@ -127,7 +127,7 @@ void fb_init(struct framebuffer *fb)
 	fb->vinfo = vinfo;
 
 	fb->offset.x = 0; // FIXME: hard coding!!
-	fb->offset.y = 25; // FIXME: hard coding!!
+	fb->offset.y = 40; // FIXME: hard coding!!
 	fb->width  -= fb->offset.x;
 	fb->height -= fb->offset.y;
 }
